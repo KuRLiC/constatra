@@ -1,0 +1,109 @@
+name: Publish release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release:
+    name: Build and publish tagged version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out release source
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: "1.27.4"
+          cache: true
+
+      - name: Validate VERSION
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_version="$(tr -d '[:space:]' < VERSION)"
+          if [[ ! "${release_version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid VERSION value: ${release_version}" >&2
+            exit 1
+          fi
+          echo "value=${release_version}" >> "${GITHUB_OUTPUT}"
+          echo "tag=v${release_version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Verify source
+        run: |
+          go vet ./...
+          go test -race ./...
+
+      - name: Build standalone Linux and Windows binaries
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+            -trimpath -ldflags "-s -w -X main.version=${RELEASE_VERSION}" \
+            -o dist/constatra-linux-amd64 ./cmd/constatra
+          CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build \
+            -trimpath -ldflags "-s -w -X main.version=${RELEASE_VERSION}" \
+            -o dist/constatra-windows-amd64.exe ./cmd/constatra
+          (
+            cd dist
+            sha256sum constatra-linux-amd64 constatra-windows-amd64.exe > SHA256SUMS
+          )
+
+      - name: Create or validate version tag
+        env:
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          git fetch --force --tags origin
+          if git rev-parse --verify --quiet "refs/tags/${RELEASE_TAG}" >/dev/null; then
+            tagged_commit="$(git rev-list -n 1 "${RELEASE_TAG}")"
+            if [[ "${tagged_commit}" != "${GITHUB_SHA}" ]]; then
+              echo "Tag ${RELEASE_TAG} already points to ${tagged_commit}, not ${GITHUB_SHA}." >&2
+              exit 1
+            fi
+            echo "Tag ${RELEASE_TAG} already points to this commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${RELEASE_TAG}" -m "Constatra ${RELEASE_TAG}"
+            git push origin "${RELEASE_TAG}"
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          if gh release view "${RELEASE_TAG}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" \
+              dist/constatra-linux-amd64 \
+              dist/constatra-windows-amd64.exe \
+              dist/SHA256SUMS \
+              --clobber
+          else
+            gh release create "${RELEASE_TAG}" \
+              dist/constatra-linux-amd64 \
+              dist/constatra-windows-amd64.exe \
+              dist/SHA256SUMS \
+              --verify-tag \
+              --title "Constatra ${RELEASE_TAG}" \
+              --generate-notes
+          fi

@@ -6,7 +6,6 @@ CONSTATRA_RELEASE_SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}
 source "${CONSTATRA_RELEASE_SCRIPT_DIR}/lib.sh"
 
 CONSTATRA_DRY_RUN=false
-CONSTATRA_GITHUB_REPOSITORY="${CONSTATRA_GITHUB_REPOSITORY:-KuRLiC/constatra}"
 if [[ "${1:-}" == "--dry-run" ]]; then
   CONSTATRA_DRY_RUN=true
   shift
@@ -14,12 +13,14 @@ elif [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   cat <<'EOF'
 Usage: ./scripts/release.sh [--dry-run]
 
-Create a versioned Linux/Windows build, checksum manifest, release commit,
-annotated tag, and GitHub Release. The only pre-existing tracked modification
-allowed is VERSION, which normal local builds advance.
+Create a versioned Linux/Windows verification build and release commit.
+Pushing the VERSION commit triggers GitHub Actions, which independently tests,
+builds, creates the version tag, and publishes the GitHub Release. The only
+pre-existing tracked modification allowed is VERSION, which normal builds
+advance.
 
 --dry-run validates local prerequisites and prints the next release version
-without building, committing, tagging, pushing, or creating a release.
+without building, committing, pushing, tagging, or creating a release.
 EOF
   exit 0
 fi
@@ -29,7 +30,7 @@ if [[ $# -ne 0 ]]; then
   exit 2
 fi
 
-for CONSTATRA_RELEASE_COMMAND in git gh sha256sum; do
+for CONSTATRA_RELEASE_COMMAND in git sha256sum; do
   if ! command -v "${CONSTATRA_RELEASE_COMMAND}" >/dev/null 2>&1; then
     echo "Required release command not found: ${CONSTATRA_RELEASE_COMMAND}" >&2
     exit 1
@@ -73,18 +74,6 @@ if [[ "${CONSTATRA_DRY_RUN}" == true ]]; then
   exit 0
 fi
 
-gh auth status --hostname github.com >/dev/null
-CONSTATRA_GITHUB_PERMISSION="$(gh repo view "${CONSTATRA_GITHUB_REPOSITORY}" --json viewerPermission --jq .viewerPermission)"
-case "${CONSTATRA_GITHUB_PERMISSION}" in
-  ADMIN|MAINTAIN|WRITE)
-    ;;
-  *)
-    echo "GitHub CLI does not have write permission for ${CONSTATRA_GITHUB_REPOSITORY}." >&2
-    echo "Current viewer permission: ${CONSTATRA_GITHUB_PERMISSION}" >&2
-    echo "Authenticate or switch gh to an account with release permission, then retry." >&2
-    exit 1
-    ;;
-esac
 git fetch origin main
 
 CONSTATRA_LOCAL_HEAD="$(git rev-parse HEAD)"
@@ -124,17 +113,7 @@ git add VERSION
 git commit \
   -m "Release ${CONSTATRA_RELEASE_TAG}" \
   -m "Record build ${CONSTATRA_RELEASE_VERSION}, validate the race-enabled test suite, and produce matching standalone Linux AMD64 and Windows AMD64 release artifacts with SHA-256 checksums."
-git tag -a "${CONSTATRA_RELEASE_TAG}" -m "Constatra ${CONSTATRA_RELEASE_TAG}"
+git push origin main
 
-git push --atomic origin main "${CONSTATRA_RELEASE_TAG}"
-
-gh release create "${CONSTATRA_RELEASE_TAG}" \
-  "${CONSTATRA_BUILD_DIR}/constatra-linux-amd64" \
-  "${CONSTATRA_BUILD_DIR}/constatra-windows-amd64.exe" \
-  "${CONSTATRA_BUILD_DIR}/SHA256SUMS" \
-  --verify-tag \
-  --repo "${CONSTATRA_GITHUB_REPOSITORY}" \
-  --title "Constatra ${CONSTATRA_RELEASE_TAG}" \
-  --generate-notes
-
-echo "Published GitHub Release ${CONSTATRA_RELEASE_TAG}."
+echo "Pushed VERSION ${CONSTATRA_RELEASE_VERSION}."
+echo "GitHub Actions will verify the source, create ${CONSTATRA_RELEASE_TAG}, and publish the Release."

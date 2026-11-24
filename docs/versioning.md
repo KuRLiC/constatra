@@ -1,6 +1,6 @@
 # Versioning and GitHub releases
 
-Constàtra uses an explicit, monotonically increasing application version and a guarded GitHub publication workflow.
+Constàtra uses an explicit, monotonically increasing application version and a tag-driven GitHub Actions publication workflow.
 
 ## Version format
 
@@ -59,26 +59,12 @@ Publishing requires:
 
 - the `main` branch;
 - the `origin` remote pointing to the intended repository;
-- GitHub CLI `gh` installed and authenticated;
-- the active GitHub CLI account has `WRITE`, `MAINTAIN`, or `ADMIN` permission on `KuRLiC/constatra`;
 - local `main` exactly synchronized with `origin/main`;
 - no staged files;
 - no tracked or untracked changes other than `VERSION`;
-- permission to push commits and tags and create releases.
+- permission to push commits to `main`.
 
-Check GitHub authentication with:
-
-```bash
-gh auth status
-```
-
-If several accounts are configured, select the account that owns or can release the repository:
-
-```bash
-gh auth switch --hostname github.com --user KuRLiC
-```
-
-The release command explicitly targets `KuRLiC/constatra`, so the custom SSH host alias used by the Git remote cannot confuse GitHub CLI. Fork maintainers may override it with `CONSTATRA_GITHUB_REPOSITORY=owner/repository`.
+Local Git authentication only needs to push `main` to `origin`. GitHub CLI is not required: tag and release creation run inside GitHub Actions with the repository's short-lived `GITHUB_TOKEN`.
 
 ## Dry-run preflight
 
@@ -94,19 +80,26 @@ The dry run validates local commands, branch, index, and working-tree scope, the
 ./scripts/release.sh
 ```
 
-The script performs these steps in order:
+The local script performs these steps in order:
 
 1. validates local prerequisites and working-tree scope;
-2. verifies GitHub authentication;
-3. fetches `origin/main` and requires an exact local match;
-4. checks the planned tag does not exist locally or remotely;
-5. increments `VERSION` once and cross-builds Linux AMD64 and Windows AMD64;
-6. runs the race-enabled Go test suite;
-7. creates `build/SHA256SUMS` for both executables;
-8. commits only `VERSION` with a detailed release commit;
-9. creates an annotated `v<version>` tag;
-10. atomically pushes `main` and the tag;
-11. creates a GitHub Release with generated notes and all three assets.
+2. fetches `origin/main` and requires an exact local match;
+3. checks the planned tag does not exist locally or remotely;
+4. increments `VERSION` once and cross-builds Linux AMD64 and Windows AMD64;
+5. runs the race-enabled Go test suite;
+6. creates a local `build/SHA256SUMS` verification manifest;
+7. commits only `VERSION` with a detailed release commit;
+8. pushes `main`.
+
+The pushed `VERSION` change triggers `.github/workflows/release.yml`. GitHub Actions then:
+
+1. checks out the exact tagged source;
+2. validates the four-component `VERSION` value;
+3. runs `go vet` and the race-enabled tests;
+4. independently builds Linux AMD64 and Windows AMD64 with the tagged version;
+5. creates a fresh SHA-256 manifest;
+6. creates or validates the annotated `v<version>` tag at that exact commit;
+7. creates the GitHub Release with generated notes, or replaces its assets on a safe workflow rerun.
 
 The uploaded files are:
 
@@ -120,6 +113,17 @@ SHA256SUMS
 
 Failures before the release commit leave only normal local build outputs and the incremented `VERSION`; rerun the dry-run after fixing the cause.
 
-If the atomic Git push fails, the commit and tag remain local and nothing is partially updated on the remote. Inspect the error before retrying.
+If the Git push fails, the version commit remains local and no tag or release is created. Inspect the error before retrying.
 
-If GitHub Release creation fails after the atomic push, the version commit and tag are already public. Do not rebuild or create another version merely to retry the upload. Use the printed tag and run an equivalent `gh release create` command with the existing files, or remove the remote tag only after deliberately deciding to abandon that release.
+If GitHub Actions fails after the push, the version commit is already public, but the workflow creates the tag only after tests and builds succeed. Do not rebuild or create another version merely to retry. Inspect the failed workflow, fix it when necessary, and rerun the job from GitHub. Reruns are idempotent: an existing tag must point to the same commit, and existing release assets are replaced.
+
+## Repository permission
+
+The workflow declares only:
+
+```yaml
+permissions:
+  contents: write
+```
+
+That permission allows the tag-triggered job to create the release and upload assets. If the repository globally restricts workflow tokens to read-only access, enable read/write workflow permissions in the repository's Actions settings or explicitly permit the workflow to request `contents: write`.
