@@ -13,9 +13,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/paul/constatra/internal/probe"
-	"github.com/paul/constatra/internal/quality"
-	"github.com/paul/constatra/internal/webui"
+	"github.com/KuRLiC/constatra/internal/probe"
+	"github.com/KuRLiC/constatra/internal/quality"
+	"github.com/KuRLiC/constatra/internal/webui"
 )
 
 // Config contains validated runtime settings.

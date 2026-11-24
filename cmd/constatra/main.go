@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/paul/constatra/internal/app"
+	"github.com/KuRLiC/constatra/internal/app"
 )
 
 var version = "dev"

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paul/constatra/internal/probe"
+	"github.com/KuRLiC/constatra/internal/probe"
 )
 
 func TestExcellentConnection(t *testing.T) {

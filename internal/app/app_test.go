@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/paul/constatra/internal/quality"
+	"github.com/KuRLiC/constatra/internal/quality"
 )
 
 func TestStateStartsInCheckingMode(t *testing.T) {

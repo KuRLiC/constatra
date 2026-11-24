@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/paul/constatra/internal/probe"
+	"github.com/KuRLiC/constatra/internal/probe"
 )
 
 // Level is the user-facing quality category. Its ordering is intentional.

@@ -1,3 +1,3 @@
-module github.com/paul/constatra
+module github.com/KuRLiC/constatra
 
 go 1.22
