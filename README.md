@@ -50,7 +50,35 @@ This metric is called **probe loss**, not raw IP packet loss. A dropped packet, 
 
 ## Quick start
 
-### Build on Linux
+### Recommended: setup, build, and run scripts
+
+On Linux or WSL, the shortest path is:
+
+```bash
+./scripts/run.sh
+```
+
+On the first run, this downloads the pinned Go toolchain into the ignored local `.tools/` directory, verifies its official SHA-256 checksum, builds Constàtra, and starts it. Later runs reuse the toolchain and Go build cache. Nothing is installed globally and `sudo` is not required.
+
+The individual steps are also available:
+
+```bash
+# Download and verify the local build toolchain
+./scripts/setup.sh
+
+# Build the native Linux/WSL executable
+./scripts/build.sh
+
+# Build Linux AMD64 and Windows AMD64 executables
+./scripts/build.sh --all
+
+# Rebuild if necessary and run; options are passed to Constàtra
+./scripts/run.sh --no-browser
+```
+
+Generated executables are written under `build/`. The downloaded toolchain and caches remain under `.tools/`; both directories are ignored by Git. See [Setup, build, and run scripts](docs/scripts.md) for the complete contract and recovery instructions.
+
+### Manual build with an existing Go installation
 
 Building requires Go 1.22 or newer. Running the resulting executable does not require Go or another runtime.
 
@@ -90,6 +118,12 @@ The checked-in build target creates both AMD64 executables and accepts an option
 
 ```bash
 make build-all VERSION=v0.1.0
+```
+
+The self-contained script equivalent is:
+
+```bash
+CONSTATRA_VERSION=v0.1.0 ./scripts/build.sh --all
 ```
 
 ### Run the Windows build
@@ -197,6 +231,7 @@ Project documentation:
 
 - [Architecture](docs/architecture.md)
 - [Measurement and quality model](docs/quality-model.md)
+- [Setup, build, and run scripts](docs/scripts.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ## Current limitations

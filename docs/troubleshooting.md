@@ -117,6 +117,21 @@ go test ./...
 
 No Node.js installation is required.
 
+Alternatively, use the repository-local setup without installing Go globally:
+
+```bash
+./scripts/setup.sh
+./scripts/build.sh
+```
+
+If setup reports an invalid existing tool directory, move `.tools/go-<version>-linux-<architecture>` out of the repository and run setup again. Setup deliberately does not delete an unexpected directory automatically.
+
+## Setup cannot download or verify Go
+
+The bootstrap requires `curl`, `tar`, `sha256sum`, and `mktemp`, which are normally present in Linux and WSL environments. It stops before extraction when any command is missing, the download fails, or the pinned checksum does not match.
+
+Corporate proxies and TLS inspection can prevent access to `https://go.dev/dl/`. Configure the environment's normal HTTPS proxy settings or install a compatible Go toolchain manually; do not disable checksum verification.
+
 ## Cross-compiled Windows binary does not start
 
 Confirm the output architecture matches Windows:

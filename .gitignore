@@ -1,5 +1,6 @@
 /build/
 /dist/
+/.tools/
 *.exe
 *.out
 .DS_Store
