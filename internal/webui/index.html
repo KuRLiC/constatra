@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070b12">
+  <meta name="shutdown-token" content="__SHUTDOWN_TOKEN__">
+  <title>Constatra — Connection Stability Tracker</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div><strong>CONSTÀTRA</strong><small>CONNECTION STABILITY TRACKER</small></div>
+    </div>
+    <div class="actions">
+      <span id="live-badge" class="live-badge waiting"><i></i><span>CONNECTING</span></span>
+      <button id="fullscreen-button" class="quiet-button" type="button">Fullscreen</button>
+      <button id="shutdown-button" class="shutdown-button" type="button">Stop</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="indicators" aria-label="Connection quality">
+      <article id="immediate-card" class="quality-card checking">
+        <div class="card-heading"><span>RIGHT NOW</span><small>LAST 3 SECONDS</small></div>
+        <div class="orb" aria-hidden="true">
+          <div class="signal-bars"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="offline-cross"></div>
+        </div>
+        <div class="quality-label" id="immediate-label">CHECKING</div>
+        <div class="primary-reading"><span id="immediate-latency">—</span><small>ms p90</small></div>
+        <div class="metrics">
+          <span><small>PROBE LOSS</small><strong id="immediate-loss">—</strong></span>
+          <span><small>JITTER</small><strong id="immediate-jitter">—</strong></span>
+          <span><small>SCORE</small><strong id="immediate-score">—</strong></span>
+        </div>
+      </article>
+
+      <article id="stability-card" class="quality-card checking">
+        <div class="card-heading"><span>STABILITY</span><small>LAST 30 SECONDS</small></div>
+        <div class="orb" aria-hidden="true">
+          <div class="signal-bars"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="offline-cross"></div>
+        </div>
+        <div class="quality-label" id="stability-label">CHECKING</div>
+        <div class="primary-reading"><span id="stability-availability">—</span><small>% available</small></div>
+        <div class="metrics">
+          <span><small>PROBE LOSS</small><strong id="stability-loss">—</strong></span>
+          <span><small>P90 RTT</small><strong id="stability-latency">—</strong></span>
+          <span><small>SCORE</small><strong id="stability-score">—</strong></span>
+        </div>
+      </article>
+    </section>
+
+    <section class="history-panel">
+      <div class="panel-heading">
+        <div><span>CONNECTION HISTORY</span><small>Latency line · missed probes in red</small></div>
+        <div class="range-picker" role="group" aria-label="Chart time range">
+          <button type="button" data-minutes="2">2m</button>
+          <button type="button" class="active" data-minutes="5">5m</button>
+          <button type="button" data-minutes="15">15m</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="history-chart"></canvas></div>
+    </section>
+
+    <section class="technical-panel">
+      <div class="technical-summary">
+        <span><small>LATEST MEDIAN</small><strong id="latest-latency">—</strong></span>
+        <span><small>LATEST PROBE LOSS</small><strong id="latest-loss">—</strong></span>
+        <span><small>UPTIME</small><strong id="uptime">—</strong></span>
+        <span><small>UPDATE</small><strong id="interval">—</strong></span>
+      </div>
+      <div id="targets" class="targets" aria-label="Probe targets"></div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
