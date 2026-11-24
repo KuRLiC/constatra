@@ -17,7 +17,7 @@ Without options, build the Linux binary for the current machine.
 With --all, build Linux AMD64 and Windows AMD64 release binaries.
 
 Optional environment:
-  CONSTATRA_VERSION   Version embedded in the binaries (default: dev)
+  The version is incremented automatically in the VERSION file.
 EOF
   exit 0
 fi
@@ -32,17 +32,19 @@ if [[ ! -x "${CONSTATRA_GO_BIN}" ]]; then
   "${CONSTATRA_BUILD_SCRIPT_DIR}/setup.sh"
 fi
 
-CONSTATRA_VERSION="${CONSTATRA_VERSION:-dev}"
+CONSTATRA_VERSION="$("${CONSTATRA_BUILD_SCRIPT_DIR}/version.sh" increment)"
 CONSTATRA_LDFLAGS="-s -w -X main.version=${CONSTATRA_VERSION}"
 mkdir -p "${CONSTATRA_BUILD_DIR}"
 
+echo "Building Constàtra ${CONSTATRA_VERSION}..."
+
 if [[ "${CONSTATRA_BUILD_MODE}" == "all" ]]; then
-  echo "Building Linux AMD64..."
+  echo "Target: Linux AMD64"
   CGO_ENABLED=0 GOOS=linux GOARCH=amd64 "${CONSTATRA_GO_BIN}" build \
     -trimpath -ldflags "${CONSTATRA_LDFLAGS}" \
     -o "${CONSTATRA_BUILD_DIR}/constatra-linux-amd64" "${CONSTATRA_REPO_ROOT}/cmd/constatra"
 
-  echo "Building Windows AMD64..."
+  echo "Target: Windows AMD64"
   CGO_ENABLED=0 GOOS=windows GOARCH=amd64 "${CONSTATRA_GO_BIN}" build \
     -trimpath -ldflags "${CONSTATRA_LDFLAGS}" \
     -o "${CONSTATRA_BUILD_DIR}/constatra-windows-amd64.exe" "${CONSTATRA_REPO_ROOT}/cmd/constatra"
@@ -53,7 +55,7 @@ if [[ "${CONSTATRA_BUILD_MODE}" == "all" ]]; then
   exit 0
 fi
 
-echo "Building Constàtra for Linux ${CONSTATRA_HOST_ARCH}..."
+echo "Target: Linux ${CONSTATRA_HOST_ARCH}"
 CGO_ENABLED=0 GOOS=linux GOARCH="${CONSTATRA_HOST_ARCH}" "${CONSTATRA_GO_BIN}" build \
   -trimpath -ldflags "${CONSTATRA_LDFLAGS}" \
   -o "${CONSTATRA_BUILD_DIR}/constatra" "${CONSTATRA_REPO_ROOT}/cmd/constatra"

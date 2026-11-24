@@ -153,12 +153,12 @@ Browser launch is best-effort. Its failure never stops measurement; the resolved
 
 The code uses the Go standard library and embedded static assets. With `CGO_ENABLED=0`, the build output is a self-contained native executable suitable for cross-compilation. No JavaScript compilation is involved.
 
-The scripts under `scripts/` provide a reproducible, non-root build environment. `setup.sh` downloads a pinned official Go archive into the Git-ignored `.tools/` directory and verifies the architecture-specific SHA-256 checksum before extraction. `build.sh` always uses that exact toolchain with `GOTOOLCHAIN=local`, while `run.sh` rebuilds incrementally before executing the native Linux binary. Toolchain and module caches also stay below `.tools/`.
+The scripts under `scripts/` provide a reproducible, non-root build environment. `setup.sh` downloads a pinned official Go archive into the Git-ignored `.tools/` directory and verifies the architecture-specific SHA-256 checksum before extraction. `build.sh` atomically advances the tracked four-component version and always uses that exact toolchain with `GOTOOLCHAIN=local`, while `run.sh` rebuilds incrementally before executing the native Linux binary. Toolchain and module caches also stay below `.tools/`.
 
-Version metadata can be supplied at link time without changing source, for example:
+Version metadata is read from the tracked `VERSION` file and supplied at link time. The underlying linker mechanism is equivalent to:
 
 ```bash
-go build -ldflags "-X main.version=v0.1.0" -o build/constatra ./cmd/constatra
+go build -ldflags "-X main.version=0.1.0.42" -o build/constatra ./cmd/constatra
 ```
 
 ## Security boundaries

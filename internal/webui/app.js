@@ -31,6 +31,7 @@
     latestLoss: document.querySelector("#latest-loss"),
     uptime: document.querySelector("#uptime"),
     interval: document.querySelector("#interval"),
+    appVersion: document.querySelector("#app-version"),
     targets: document.querySelector("#targets"),
     chart: document.querySelector("#history-chart"),
     fullscreenButton: document.querySelector("#fullscreen-button"),
@@ -131,6 +132,7 @@
     if (!snapshot || typeof snapshot !== "object") return;
     state.startedAt = snapshot.startedAt || state.startedAt;
     state.intervalMs = finite(snapshot.intervalMs, state.intervalMs);
+    elements.appVersion.textContent = snapshot.version || "—";
     elements.interval.textContent = state.intervalMs >= 1000
       ? `${(state.intervalMs / 1000).toFixed(state.intervalMs % 1000 ? 1 : 0)} s`
       : `${Math.round(state.intervalMs)} ms`;

@@ -69,7 +69,7 @@ The individual steps are also available:
 # Build the native Linux/WSL executable
 ./scripts/build.sh
 
-# Build Linux AMD64 and Windows AMD64 executables
+# Build Linux AMD64 and Windows AMD64 executables with one shared version
 ./scripts/build.sh --all
 
 # Rebuild if necessary and run; options are passed to Constàtra
@@ -77,6 +77,8 @@ The individual steps are also available:
 ```
 
 Generated executables are written under `build/`. The downloaded toolchain and caches remain under `.tools/`; both directories are ignored by Git. See [Setup, build, and run scripts](docs/scripts.md) for the complete contract and recovery instructions.
+
+Every project build increments the final component of the tracked `VERSION` value. Both binaries produced by one `--all` invocation receive the same version, which is visible in the dashboard, startup console, and `--version` output.
 
 ### Manual build with an existing Go installation
 
@@ -114,17 +116,33 @@ CGO_ENABLED=0 GOOS=windows GOARCH=amd64 \
 
 For ARM64 targets, replace `GOARCH=amd64` with `GOARCH=arm64`.
 
-The checked-in build target creates both AMD64 executables and accepts an optional version:
+The checked-in build target creates both AMD64 executables and advances the tracked version:
 
 ```bash
-make build-all VERSION=v0.1.0
+make build-all
 ```
 
 The self-contained script equivalent is:
 
 ```bash
-CONSTATRA_VERSION=v0.1.0 ./scripts/build.sh --all
+./scripts/build.sh --all
 ```
+
+### Publish a GitHub Release
+
+Preview the next release without changing files or GitHub:
+
+```bash
+./scripts/release.sh --dry-run
+```
+
+Publish after reviewing the preflight:
+
+```bash
+./scripts/release.sh
+```
+
+The release workflow requires GitHub CLI authentication. It verifies `main` is synchronized and free of unrelated changes, increments the version, builds and tests Linux/Windows artifacts, writes SHA-256 checksums, commits `VERSION`, creates an annotated tag, pushes atomically, and creates a GitHub Release. See [Versioning and GitHub releases](docs/versioning.md).
 
 ### Run the Windows build
 
@@ -232,6 +250,7 @@ Project documentation:
 - [Architecture](docs/architecture.md)
 - [Measurement and quality model](docs/quality-model.md)
 - [Setup, build, and run scripts](docs/scripts.md)
+- [Versioning and GitHub releases](docs/versioning.md)
 - [Troubleshooting](docs/troubleshooting.md)
 
 ## Current limitations

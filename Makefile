@@ -1,26 +1,22 @@
-BINARY := constatra
-BUILD_DIR := build
-VERSION ?= dev
-GO ?= go
-LDFLAGS := -s -w -X main.version=$(VERSION)
-
-.PHONY: build build-all test check clean
+.PHONY: build build-all release-dry-run test check clean
 
 build:
-	mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=0 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY) ./cmd/constatra
+	./scripts/build.sh
 
 build-all:
-	mkdir -p $(BUILD_DIR)
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY)-linux-amd64 ./cmd/constatra
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 $(GO) build -trimpath -ldflags "$(LDFLAGS)" -o $(BUILD_DIR)/$(BINARY)-windows-amd64.exe ./cmd/constatra
+	./scripts/build.sh --all
+
+release-dry-run:
+	./scripts/release.sh --dry-run
 
 test:
-	$(GO) test ./...
+	./scripts/setup.sh
+	bash -c 'source scripts/lib.sh && "$${CONSTATRA_GO_BIN}" test ./...'
 
 check:
-	$(GO) vet ./...
-	$(GO) test -race ./...
+	./scripts/setup.sh
+	bash -c 'source scripts/lib.sh && "$${CONSTATRA_GO_BIN}" vet ./...'
+	bash -c 'source scripts/lib.sh && "$${CONSTATRA_GO_BIN}" test -race ./...'
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf build
