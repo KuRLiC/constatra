@@ -60,6 +60,7 @@ Publishing requires:
 - the `main` branch;
 - the `origin` remote pointing to the intended repository;
 - GitHub CLI `gh` installed and authenticated;
+- the active GitHub CLI account has `WRITE`, `MAINTAIN`, or `ADMIN` permission on `KuRLiC/constatra`;
 - local `main` exactly synchronized with `origin/main`;
 - no staged files;
 - no tracked or untracked changes other than `VERSION`;
@@ -70,6 +71,14 @@ Check GitHub authentication with:
 ```bash
 gh auth status
 ```
+
+If several accounts are configured, select the account that owns or can release the repository:
+
+```bash
+gh auth switch --hostname github.com --user KuRLiC
+```
+
+The release command explicitly targets `KuRLiC/constatra`, so the custom SSH host alias used by the Git remote cannot confuse GitHub CLI. Fork maintainers may override it with `CONSTATRA_GITHUB_REPOSITORY=owner/repository`.
 
 ## Dry-run preflight
 

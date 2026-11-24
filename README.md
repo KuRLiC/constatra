@@ -142,7 +142,7 @@ Publish after reviewing the preflight:
 ./scripts/release.sh
 ```
 
-The release workflow requires GitHub CLI authentication. It verifies `main` is synchronized and free of unrelated changes, increments the version, builds and tests Linux/Windows artifacts, writes SHA-256 checksums, commits `VERSION`, creates an annotated tag, pushes atomically, and creates a GitHub Release. See [Versioning and GitHub releases](docs/versioning.md).
+The release workflow requires GitHub CLI authentication with write permission on `KuRLiC/constatra`. It verifies `main` is synchronized and free of unrelated changes, increments the version, builds and tests Linux/Windows artifacts, writes SHA-256 checksums, commits `VERSION`, creates an annotated tag, pushes atomically, and creates a GitHub Release. See [Versioning and GitHub releases](docs/versioning.md).
 
 ### Run the Windows build
 

@@ -6,6 +6,7 @@ CONSTATRA_RELEASE_SCRIPT_DIR="$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}
 source "${CONSTATRA_RELEASE_SCRIPT_DIR}/lib.sh"
 
 CONSTATRA_DRY_RUN=false
+CONSTATRA_GITHUB_REPOSITORY="${CONSTATRA_GITHUB_REPOSITORY:-KuRLiC/constatra}"
 if [[ "${1:-}" == "--dry-run" ]]; then
   CONSTATRA_DRY_RUN=true
   shift
@@ -72,7 +73,18 @@ if [[ "${CONSTATRA_DRY_RUN}" == true ]]; then
   exit 0
 fi
 
-gh auth status >/dev/null
+gh auth status --hostname github.com >/dev/null
+CONSTATRA_GITHUB_PERMISSION="$(gh repo view "${CONSTATRA_GITHUB_REPOSITORY}" --json viewerPermission --jq .viewerPermission)"
+case "${CONSTATRA_GITHUB_PERMISSION}" in
+  ADMIN|MAINTAIN|WRITE)
+    ;;
+  *)
+    echo "GitHub CLI does not have write permission for ${CONSTATRA_GITHUB_REPOSITORY}." >&2
+    echo "Current viewer permission: ${CONSTATRA_GITHUB_PERMISSION}" >&2
+    echo "Authenticate or switch gh to an account with release permission, then retry." >&2
+    exit 1
+    ;;
+esac
 git fetch origin main
 
 CONSTATRA_LOCAL_HEAD="$(git rev-parse HEAD)"
@@ -121,6 +133,7 @@ gh release create "${CONSTATRA_RELEASE_TAG}" \
   "${CONSTATRA_BUILD_DIR}/constatra-windows-amd64.exe" \
   "${CONSTATRA_BUILD_DIR}/SHA256SUMS" \
   --verify-tag \
+  --repo "${CONSTATRA_GITHUB_REPOSITORY}" \
   --title "Constatra ${CONSTATRA_RELEASE_TAG}" \
   --generate-notes
 
